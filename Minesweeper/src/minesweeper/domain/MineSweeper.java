@@ -21,7 +21,7 @@ public class MineSweeper implements IMineSweeper{
 	private MineSweeper(int cols, int rows, int mines) throws Exception{
 		topSweeperManager = new TopSweeperManager();
 		initialize(cols,rows,mines);
-	}
+	} 
 
 	private MineSweeper() throws Exception{
 		this(10,10,10);
@@ -39,9 +39,8 @@ public class MineSweeper implements IMineSweeper{
 	}
 
 	void checkForWin(Object lastNonMine) {
-		int numOfSquares = 100;
-		int numOfMines = 10;
-		if (uncoveredCount + numOfMines == numOfSquares) {
+		int numOfSquares = board.getSquares().size();
+		if (uncoveredCount + mineCount == numOfSquares) {
 			gameOver = true;
 			fireGameOver(true, lastNonMine);
 		}
@@ -106,7 +105,7 @@ public class MineSweeper implements IMineSweeper{
 
 	private void initialize(int cols, int rows, int mines) {
 	
-		board = new MineField();
+		board = new MineField(cols, rows, mines);
 
 		gameOver = false;
 		uncoveredCount = 0;
@@ -152,7 +151,7 @@ public class MineSweeper implements IMineSweeper{
 	}
 
 	public void mark(int location) {
-		//TODO: not yet implemented
+		board.mark(location);
 	}
 
 	void incrementUncoveredCount() {
@@ -163,7 +162,7 @@ public class MineSweeper implements IMineSweeper{
 	}
 	void decrementMineCounter() {
 		mineCount--;
-	}
+	} 
 
 	public int getMineCount() {
 		return mineCount;

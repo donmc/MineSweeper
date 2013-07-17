@@ -3,38 +3,24 @@ import java.util.*;
 
 class MineField {
 
-	private Map squares;
-	private List mineLocations; 
+	private Map<Integer, Square> squares;
+	private List<Integer> mineLocations;
+	private int rows;
+	private int cols;
+	private int mines; 
 
-	MineField() {
-		squares = new HashMap(100);
-
-		for(int i=0;i<100;i++) {
-			squares.put(new Integer(i),new BlankSquare(i));
-		}
+	MineField(int cols, int rows, int mines) {
+		this.rows = rows;
+		this.cols = cols;
+		this.mines = mines;
 		
-		mineLocations = generateRandomNumbers(10);
-		
-		for(Iterator it = mineLocations.iterator();it.hasNext();) {
-			Integer location = (Integer)it.next();
-			Square mine = new MineSquare(location.intValue());
-			squares.put(location,mine);
+		createBlanSquares();
+		createMineSquares(mines);		
+		getToKnowNeighbors();
+	}
 
-			List neighbors = getNeighbors(location.intValue());
-
-			for(Iterator it2 = neighbors.iterator();it2.hasNext();) {
-				location = (Integer)it2.next();
-
-				if (squares.get(location) instanceof NumberSquare) {
-					NumberSquare ns = (NumberSquare)squares.get(location);
-					ns.incrementValue();
-				}else if(squares.get(location) instanceof BlankSquare) {
-					squares.put(location,new NumberSquare(location.intValue(),1));
-				}
-			}
-		}		
-		
-		for(int location =0;location<100;location++) {
+	private void getToKnowNeighbors() {
+		for(int location=0;location<numberOfSquares();location++) {
 
 			Square square = (Square)squares.get(new Integer(location));
 			List neighbors = getNeighbors(location);
@@ -45,6 +31,48 @@ class MineField {
 		}
 	}
 
+	private void createMineSquares(int mines) {
+		mineLocations = generateRandomNumbers(mines);
+		
+		for (Integer location : mineLocations) {
+			
+			Square mine = new MineSquare(location.intValue());
+			squares.put(location,mine);
+
+			List<Integer> neighbors = getNeighbors(location);
+
+			createNumberSquares(neighbors);
+		}
+	}
+
+	private void createNumberSquares(List<Integer> neighbors) {
+		for (Integer neighbor : neighbors) {
+
+			if (squares.get(neighbor) instanceof NumberSquare) {
+				NumberSquare ns = (NumberSquare)squares.get(neighbor);
+				ns.incrementValue();
+			}else if(squares.get(neighbor) instanceof BlankSquare) {
+				squares.put(neighbor,new NumberSquare(neighbor.intValue(),1));
+			}
+		}
+	}
+
+	private void createBlanSquares() {
+		squares = new HashMap<Integer, Square>(numberOfSquares());
+
+		for(int i=0; i < numberOfSquares(); i++) {
+			squares.put(i, new BlankSquare(i));
+		}
+	}
+
+	private int numberOfSquares() {
+		return cols*rows;
+	}
+
+	public MineField() {
+		this(10, 10, 10);
+	}
+
 	void uncoverMineSquares() {
 		for(Iterator it = mineLocations.iterator();it.hasNext();) {
 			Square mine = (Square)squares.get((Integer)it.next());
@@ -52,41 +80,41 @@ class MineField {
 		}
 	}
 
-	private List getNeighbors(int location) {
+	private List<Integer> getNeighbors(int location) {
 		
-		List neighbors = new ArrayList();
+		List<Integer> neighbors = new ArrayList<Integer>();
 
 		// if location is not on left side, then add neighbors from left
-		if (location%(10)!=0) {
-			neighbors.add(new Integer(location-1));
-			if (location>9) {
-				neighbors.add(new Integer(location-11));
+		if (location%(cols)!=0) {
+			neighbors.add(location-1);
+			if (location>cols-1) {
+				neighbors.add(location-(cols+1));
 			}
-			if (location<90) {
-				neighbors.add(new Integer(location+9));
+			if (location<(numberOfSquares()-cols)) {
+				neighbors.add(location+(cols-1));
 			}
 		}
 
 		// if location is not on right side, then add neighbors from right
-		if ((location+1)%(10)!=0){ 
-			neighbors.add(new Integer(location+1));
-			if (location>9) {
-				neighbors.add(new Integer(location-9));
+		if ((location+1)%(cols)!=0){ 
+			neighbors.add(location+1);
+			if (location>(cols-1)) {
+				neighbors.add(location-(cols-1));
 			}
 
-			if (location<90) {
-				neighbors.add(new Integer(location+11));
+			if (location<(numberOfSquares()-cols)) {
+				neighbors.add(location+(cols+1));
 			}
 		}
 
 		// if location is not on top, then add neighbors from top
-		if (location>9) {  
-			neighbors.add(new Integer(location-10));
+		if (location>(cols-1)) {  
+			neighbors.add(location-cols);
 		}
 
 		// if location is not on bottom, then add neighbors from bottom
-		if (location<90) { 
-			neighbors.add(new Integer(location+10));
+		if (location<(numberOfSquares()-cols)) { 
+			neighbors.add(location+cols);
 		}
 
 		return neighbors;
@@ -99,7 +127,7 @@ class MineField {
 			Integer random = null;
 
 			do {
-				random = new Integer((int)(Math.random()*100));
+				random = new Integer((int)(Math.random()*numberOfSquares()));
 			}while(randomNumbers.contains(random));
 
 			randomNumbers.add(random);
@@ -113,9 +141,9 @@ class MineField {
 
 		String board = "";
 
-		for(int i=0;i<10;i++) {
-			for(int j=0;j<10;j++) {
-				board = board + "|"+ squares.get(new Integer(j+(i*10)));
+		for(int i=0;i<rows;i++) {
+			for(int j=0;j<cols;j++) {
+				board = board + "|"+ squares.get(j+(i*cols));
 			}
 			board = board + "\n";
 		}
@@ -123,12 +151,17 @@ class MineField {
 	}
 
 
-	Map getSquares(){
+	Map<Integer, Square> getSquares(){
 		return squares;
 	}
 
 	void uncover(int location) {
-		Square square = (Square)squares.get(new Integer(location));
+		Square square = squares.get(location);
 		square.uncover();
+	}
+
+	public void mark(int location) {
+		Square square = squares.get(location);
+		square.mark();
 	}
 }
